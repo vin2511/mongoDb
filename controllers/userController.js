@@ -1,19 +1,62 @@
-const getUser = (req,res) => {
-    res.status(200).json({message: 'Get all Users'})
-};
+const asyncHandler = require('express-async-handler')
+const Employee_info = require('../models/empModel')
 
-const getUsrById =  (req,res) => {
-    res.status(200).json({message: `Get User for ${req.params.id}`})
-}
-const createUser =  (req,res) => {
-    res.status(200).json({message: 'Create User'})
-}
+const getUser = asyncHandler(async (req, res) => {
+    const employee_info = await Employee_info.find();
 
-const updateUser =  (req,res) => {
-    res.status(200).json({message: `Update User for ${req.params.id}`})
-}
-const delUser = (req,res) => {
-    res.status(200).json({message:`Delete Users ${req.params.id}`})
-}
+    res.status(200).json(employee_info)
+});
 
-module.exports  = {getUser,createUser,updateUser,getUsrById, delUser}
+const getUsrById = asyncHandler(async (req, res) => {
+    const employee_info = await Employee_info.findById(req.params.id)
+    if(!employee_info){
+        res.status(404)
+        throw new Error("Emp not found")
+    }
+    res.status(200).json(employee_info)
+})
+
+const createUser = asyncHandler(async (req, res) => {
+    const { name, email, phone } = req.body;
+    
+    if (! name || !email || !phone) {
+        res.status(400);
+        throw new Error('all fields are required')
+    }
+    console.log( name, email, phone)
+    const employee_info = await Employee_info.create({
+        name,
+        email,
+        phone
+    });
+    
+    res.status(201).json(employee_info)
+})
+
+const updateUser = asyncHandler(async (req, res) => { 
+    const employee_info =  await Employee_info.findById(req.params.id);
+    if(!employee_info) {
+        res.status(404);
+        throw new Error ("Emp not found");
+    }
+
+    const updatedEmployee =  await Employee_info.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    );
+    res.status(200).json(updatedEmployee)
+})
+
+const delUser = asyncHandler(async (req, res) => {
+    const employee_info = await Employee_info.findById(req.params.id);
+    if(!employee_info){
+        res.status(404);
+        throw new Error ("Emp not found")
+    }
+    await Employee_info.findById(req.params.id);
+    res.send("deleted")
+    res.status(200).json(Employee_info)
+})
+
+module.exports = { getUser, createUser, updateUser, getUsrById, delUser }
